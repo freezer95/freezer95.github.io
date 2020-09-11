@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-cn">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="vue,">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="Vue 作为当前热门的框架之一，主要难点分为三大部分：模板编译、MVVM、虚拟DOM。而生命周期作为实例从创建到销毁全过程暴露的钩子，既为用户提供了在不同阶段注入代码的机会，也提供了了解整个框架源码的切入点。本篇文章，以生命周期为入口，旨在帮助大家抓住 Vue 框架运行的主线，会涉及到三大部分（模板编译、MVVM、虚拟DOM）的概念，但不会做更深入的说明。如有兴趣，可自行阅读其他资料或源码。">
+<meta name="keywords" content="vue">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Vue(v2.6.10) - 生命周期">
+<meta property="og:url" content="https://freezer95.github.io/2019/06/21/lifecycle/index.html">
+<meta property="og:site_name" content="Freezer&#39;s Blog">
+<meta property="og:description" content="Vue 作为当前热门的框架之一，主要难点分为三大部分：模板编译、MVVM、虚拟DOM。而生命周期作为实例从创建到销毁全过程暴露的钩子，既为用户提供了在不同阶段注入代码的机会，也提供了了解整个框架源码的切入点。本篇文章，以生命周期为入口，旨在帮助大家抓住 Vue 框架运行的主线，会涉及到三大部分（模板编译、MVVM、虚拟DOM）的概念，但不会做更深入的说明。如有兴趣，可自行阅读其他资料或源码。">
+<meta property="og:locale" content="zh-cn">
+<meta property="og:updated_time" content="2020-09-11T10:49:47.363Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Vue(v2.6.10) - 生命周期">
+<meta name="twitter:description" content="Vue 作为当前热门的框架之一，主要难点分为三大部分：模板编译、MVVM、虚拟DOM。而生命周期作为实例从创建到销毁全过程暴露的钩子，既为用户提供了在不同阶段注入代码的机会，也提供了了解整个框架源码的切入点。本篇文章，以生命周期为入口，旨在帮助大家抓住 Vue 框架运行的主线，会涉及到三大部分（模板编译、MVVM、虚拟DOM）的概念，但不会做更深入的说明。如有兴趣，可自行阅读其他资料或源码。">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://freezer95.github.io/2019/06/21/lifecycle/">
+
+
+
+
+
+  <title>Vue(v2.6.10) - 生命周期 | Freezer's Blog</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-cn">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Freezer's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            Archives
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://freezer95.github.io/2019/06/21/lifecycle/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Freezer">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Freezer's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Vue(v2.6.10) - 生命周期</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2019-06-21T10:00:00+08:00">
+                2019-06-21
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+              <div class="post-description">
+                  Vue 作为当前热门的框架之一，主要难点分为三大部分：模板编译、MVVM、虚拟DOM。而生命周期作为实例从创建到销毁全过程暴露的钩子，既为用户提供了在不同阶段注入代码的机会，也提供了了解整个框架源码的切入点。本篇文章，以生命周期为入口，旨在帮助大家抓住 Vue 框架运行的主线，会涉及到三大部分（模板编译、MVVM、虚拟DOM）的概念，但不会做更深入的说明。如有兴趣，可自行阅读其他资料或源码。
+              </div>
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>Vue 作为当前热门的框架之一，主要难点分为三大部分：模板编译、MVVM、虚拟DOM。而生命周期作为实例从创建到销毁全过程暴露的钩子，既为用户提供了在不同阶段注入代码的机会，也提供了了解整个框架源码的切入点。<br>本篇文章，以生命周期为入口，旨在帮助大家抓住 Vue 框架运行的主线，会涉及到三大部分（模板编译、MVVM、虚拟DOM）的概念，但不会做更深入的说明。如有兴趣，可自行阅读其他资料或源码。</p>
+<h2 id="图示"><a href="#图示" class="headerlink" title="图示"></a>图示</h2><p>主要的生命周期钩子可分为四类，每类有开始前（beforeXx） 和 已完成（过去式）两个钩子：<br>|  类别   | 钩子（开始前）  | 钩子（已完成）  |<br>|  —-  | —-  | —-  |<br>| 创建  | beforeCreate | created |<br>| 挂载  | beforeMount | mounted |<br>| 更新  | beforeUpdate | updated |<br>| 销毁  | beforeDestroy | destroyed |<br>接下来通过 <a href="https://cn.vuejs.org/v2/guide/instance.html#生命周期图示" target="_blank" rel="noopener">Vue 官网生命周期图示</a>，了解生命周期钩子的含义及模糊逻辑。</p>
+<h2 id="源码解析"><a href="#源码解析" class="headerlink" title="源码解析"></a>源码解析</h2><p>通过图示对生命周期有所了解后，下面从源码层面初步了解生命周期钩子的具体逻辑</p>
+<h4 id="beforeCreate-amp-created"><a href="#beforeCreate-amp-created" class="headerlink" title="beforeCreate &amp; created"></a>beforeCreate &amp; created</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Vue 构造函数，通过 new 生成 Vue 实例时，调用 Vue.prototype.__init__</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Vue</span> (<span class="params">options</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!(<span class="keyword">this</span> <span class="keyword">instanceof</span> Vue)</span><br><span class="line">    ) &#123;</span><br><span class="line">      warn(<span class="string">'Vue is a constructor and should be called with the `new` keyword'</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">this</span>._init(options);</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">  Vue.prototype._init = <span class="function"><span class="keyword">function</span> (<span class="params">options</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> vm = <span class="keyword">this</span>;</span><br><span class="line">    vm._uid = uid$<span class="number">3</span>++; <span class="comment">// 自增的标识符</span></span><br><span class="line">    vm._isVue = <span class="literal">true</span>;  <span class="comment">// a flag to avoid this being observed</span></span><br><span class="line">    vm.$options = ...  <span class="comment">// merge options</span></span><br><span class="line">    &#123;</span><br><span class="line">      initProxy(vm);   <span class="comment">// 若当前环境支持 Proxy，则将vm的proxy保存在vm._renderProxy中</span></span><br><span class="line">    &#125;</span><br><span class="line">    vm._self = vm;     <span class="comment">// expose real self</span></span><br><span class="line">    initLifecycle(vm); <span class="comment">// 设置生命周期相关的属性值，如: vm._isMounted, vm._isDestroyed 等为 false</span></span><br><span class="line">    initEvents(vm);    <span class="comment">// 初始化 vm._events = Object.create(null)</span></span><br><span class="line">    initRender(vm);    <span class="comment">// 初始化 vm._c</span></span><br><span class="line">    callHook(vm, <span class="string">'beforeCreate'</span>);</span><br><span class="line">    initInjections(vm); <span class="comment">// resolve injections before data/props</span></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 初始化 vm._watchers 和 vm.$options</span></span><br><span class="line"><span class="comment">     * vm._watchers = []</span></span><br><span class="line"><span class="comment">     * initProps</span></span><br><span class="line"><span class="comment">     * initMethods</span></span><br><span class="line"><span class="comment">     * initData：vm._data为真实数据对象，代理 vm.key 的 get, set 到 vm._data.key 上; observe(data, true)</span></span><br><span class="line"><span class="comment">     * initComputed：初始化 vm._computedWatchers，new Watcher(vm, getter || noop, noop, computedWatcherOptions);，defineComputed</span></span><br><span class="line"><span class="comment">     * initWatch：用vm.$watch(expOrFn, handler, options)的原理实现</span></span><br><span class="line"><span class="comment">     **/</span></span><br><span class="line">    initState(vm);</span><br><span class="line">    initProvide(vm);    <span class="comment">// resolve provide after data/props</span></span><br><span class="line">    callHook(vm, <span class="string">'created'</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (vm.$options.el) &#123;</span><br><span class="line">      vm.$mount(vm.$options.el);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="beforeMount"><a href="#beforeMount" class="headerlink" title="beforeMount"></a>beforeMount</h4><p>编译 template 或 el 对应的 DOM 元素的 OuterHTML 为 AST，然后根据 AST 生成 vm.$option.render 函数，优化（检查 static 节点，static 子树）</p>
+<h4 id="mounted"><a href="#mounted" class="headerlink" title="mounted"></a>mounted</h4><p>创建组件级wachter，执行 render 函数生成虚拟 Dom，执行 update 函数，通过 patch vnode 和 oldVnode 操作真实 DOM 节点</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line">Vue.prototype.$mount = <span class="function"><span class="keyword">function</span> (<span class="params">el, hydrating</span>) </span>&#123;</span><br><span class="line">  el = el &amp;&amp; inBrowser ? query(el) : <span class="literal">undefined</span>;</span><br><span class="line">  <span class="keyword">return</span> mountComponent(<span class="keyword">this</span>, el, hydrating)</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> mount = Vue.prototype.$mount;</span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 生成 render 和 staticRenderFns 函数，保存在 vm.$options 中</span></span><br><span class="line"><span class="comment"> **/</span></span><br><span class="line">Vue.prototype.$mount = <span class="function"><span class="keyword">function</span> (<span class="params">el, hydrating</span>) </span>&#123;</span><br><span class="line">  el = el &amp;&amp; query(el);</span><br><span class="line">  <span class="keyword">var</span> options = <span class="keyword">this</span>.$options;</span><br><span class="line">  <span class="comment">// resolve template/el and convert to render function</span></span><br><span class="line">  <span class="keyword">if</span> (!options.render) &#123;</span><br><span class="line">    <span class="keyword">var</span> template = options.template;</span><br><span class="line">    <span class="keyword">if</span> (template) &#123;</span><br><span class="line">      <span class="keyword">if</span> (<span class="keyword">typeof</span> template === <span class="string">'string'</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (template.charAt(<span class="number">0</span>) === <span class="string">'#'</span>) &#123;</span><br><span class="line">          template = idToTemplate(template);</span><br><span class="line">        &#125;</span><br><span class="line">      &#125; <span class="keyword">else</span> <span class="keyword">if</span> (template.nodeType) &#123;</span><br><span class="line">        template = template.innerHTML;</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        &#123;</span><br><span class="line">          warn(<span class="string">'invalid template option:'</span> + template, <span class="keyword">this</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">this</span></span><br><span class="line">      &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (el) &#123;</span><br><span class="line">      template = getOuterHTML(el);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (template) &#123;</span><br><span class="line">      <span class="keyword">var</span> ref = compileToFunctions(template, &#123;</span><br><span class="line">        outputSourceRange: <span class="string">"development"</span> !== <span class="string">'production'</span>,</span><br><span class="line">        shouldDecodeNewlines: shouldDecodeNewlines,</span><br><span class="line">        shouldDecodeNewlinesForHref: shouldDecodeNewlinesForHref,</span><br><span class="line">        delimiters: options.delimiters,</span><br><span class="line">        comments: options.comments</span><br><span class="line">      &#125;, <span class="keyword">this</span>);</span><br><span class="line">      <span class="keyword">var</span> render = ref.render;</span><br><span class="line">      <span class="keyword">var</span> staticRenderFns = ref.staticRenderFns;</span><br><span class="line">      options.render = render;</span><br><span class="line">      options.staticRenderFns = staticRenderFns;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> mount.call(<span class="keyword">this</span>, el, hydrating)</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">mountComponent</span> (<span class="params">vm, el, hydrating</span>) </span>&#123;</span><br><span class="line">    vm.$el = el;</span><br><span class="line">    callHook(vm, <span class="string">'beforeMount'</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> updateComponent = <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">      vm._update(vm._render(), hydrating);</span><br><span class="line">    &#125;;</span><br><span class="line">    <span class="comment">// 创建组件级别的 watcher</span></span><br><span class="line">    <span class="comment">// 实例化watcher时会执行this.get()获取value值，即执行updateComponent方法</span></span><br><span class="line">    <span class="comment">// 实例化的watcher实例保存在vm._watcher属性中，也会push进vm._watchers</span></span><br><span class="line">    <span class="keyword">new</span> Watcher(vm, updateComponent, noop, &#123;</span><br><span class="line">      before: <span class="function"><span class="keyword">function</span> <span class="title">before</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (vm._isMounted &amp;&amp; !vm._isDestroyed) &#123;</span><br><span class="line">          callHook(vm, <span class="string">'beforeUpdate'</span>);</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;, <span class="literal">true</span> <span class="comment">/* isRenderWatcher */</span>);</span><br><span class="line">    hydrating = <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// manually mounted instance, call mounted on self</span></span><br><span class="line">    <span class="comment">// mounted is called for render-created child components in its inserted hook</span></span><br><span class="line">    <span class="keyword">if</span> (vm.$vnode == <span class="literal">null</span>) &#123;</span><br><span class="line">      vm._isMounted = <span class="literal">true</span>;</span><br><span class="line">      callHook(vm, <span class="string">'mounted'</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> vm</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="beforeUpdate-amp-updated"><a href="#beforeUpdate-amp-updated" class="headerlink" title="beforeUpdate &amp; updated"></a>beforeUpdate &amp; updated</h4><p>检测到组件级wachter相关的数据变化，在 flushSchedulerQueue 中排序后遍历 queue 中的 watcher 执行 watcher.before() 和 watcher.run()。在执行 watcher.before() 中触发 beforeUpdate，在 watcher.run() 执行完毕后触发 updated</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">flushSchedulerQueue</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">  currentFlushTimestamp = getNow();</span><br><span class="line">  flushing = <span class="literal">true</span>;</span><br><span class="line">  <span class="keyword">var</span> watcher, id;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Sort queue before flush.</span></span><br><span class="line">  <span class="comment">// This ensures that:</span></span><br><span class="line">  <span class="comment">// 1. Components are updated from parent to child. (because parent is always</span></span><br><span class="line">  <span class="comment">//    created before the child)</span></span><br><span class="line">  <span class="comment">// 2. A component's user watchers are run before its render watcher (because</span></span><br><span class="line">  <span class="comment">//    user watchers are created before the render watcher)</span></span><br><span class="line">  <span class="comment">// 3. If a component is destroyed during a parent component's watcher run,</span></span><br><span class="line">  <span class="comment">//    its watchers can be skipped.</span></span><br><span class="line">  queue.sort(<span class="function"><span class="keyword">function</span> (<span class="params">a, b</span>) </span>&#123; <span class="keyword">return</span> a.id - b.id; &#125;);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// do not cache length because more watchers might be pushed</span></span><br><span class="line">  <span class="comment">// as we run existing watchers</span></span><br><span class="line">  <span class="keyword">for</span> (index = <span class="number">0</span>; index &lt; queue.length; index++) &#123;</span><br><span class="line">    watcher = queue[index];</span><br><span class="line">    <span class="keyword">if</span> (watcher.before) &#123;</span><br><span class="line">      watcher.before();</span><br><span class="line">    &#125;</span><br><span class="line">    id = watcher.id;</span><br><span class="line">    has[id] = <span class="literal">null</span>;</span><br><span class="line">    watcher.run();</span><br><span class="line">    <span class="comment">// in dev build, check and stop circular updates.</span></span><br><span class="line">    <span class="keyword">if</span> (has[id] != <span class="literal">null</span>) &#123;</span><br><span class="line">      circular[id] = (circular[id] || <span class="number">0</span>) + <span class="number">1</span>;</span><br><span class="line">      <span class="keyword">if</span> (circular[id] &gt; MAX_UPDATE_COUNT) &#123;</span><br><span class="line">        warn(</span><br><span class="line">          <span class="string">'You may have an infinite update loop '</span> + (</span><br><span class="line">            watcher.user</span><br><span class="line">              ? (<span class="string">"in watcher with expression \""</span> + (watcher.expression) + <span class="string">"\""</span>)</span><br><span class="line">              : <span class="string">"in a component render function."</span></span><br><span class="line">          ),</span><br><span class="line">          watcher.vm</span><br><span class="line">        );</span><br><span class="line">        <span class="keyword">break</span></span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// keep copies of post queues before resetting state</span></span><br><span class="line">  <span class="keyword">var</span> activatedQueue = activatedChildren.slice();</span><br><span class="line">  <span class="keyword">var</span> updatedQueue = queue.slice();</span><br><span class="line"></span><br><span class="line">  resetSchedulerState();</span><br><span class="line"></span><br><span class="line">  <span class="comment">// call component updated and activated hooks</span></span><br><span class="line">  callActivatedHooks(activatedQueue);</span><br><span class="line">  callUpdatedHooks(updatedQueue);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// devtool hook</span></span><br><span class="line">  <span class="comment">/* istanbul ignore if */</span></span><br><span class="line">  <span class="keyword">if</span> (devtools &amp;&amp; config.devtools) &#123;</span><br><span class="line">    devtools.emit(<span class="string">'flush'</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">callUpdatedHooks</span> (<span class="params">queue</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">var</span> i = queue.length;</span><br><span class="line">  <span class="keyword">while</span> (i--) &#123;</span><br><span class="line">    <span class="keyword">var</span> watcher = queue[i];</span><br><span class="line">    <span class="keyword">var</span> vm = watcher.vm;</span><br><span class="line">    <span class="keyword">if</span> (vm._watcher === watcher &amp;&amp; vm._isMounted &amp;&amp; !vm._isDestroyed) &#123;</span><br><span class="line">      callHook(vm, <span class="string">'updated'</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="beforeDestroy-amp-destroyed"><a href="#beforeDestroy-amp-destroyed" class="headerlink" title="beforeDestroy &amp; destroyed"></a>beforeDestroy &amp; destroyed</h4><p>在检测到数据变化后，执行watcher.run()的过程中，会执行watcher.get()，执行实例化wacher时传入的expOrFn。实例化 watcher的代码如下：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> updateComponent = <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">  vm._update(vm._render(), hydrating);</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">new</span> Watcher(vm, updateComponent, noop, &#123;</span><br><span class="line">  before: <span class="function"><span class="keyword">function</span> <span class="title">before</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (vm._isMounted &amp;&amp; !vm._isDestroyed) &#123;</span><br><span class="line">      callHook(vm, <span class="string">'beforeUpdate'</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;, <span class="literal">true</span> <span class="comment">/* isRenderWatcher */</span>);</span><br></pre></td></tr></table></figure>
+
+<p>因此，当检测到组件内的数据变化时，执行对该数据有依赖的watcher.run()方法时，会执行上述的updateComponent方法，在updateComponent中，通过 Vue.prototype._render()生成新的虚拟DOM树，在Vue.prototype._update中，会对新旧虚拟DOM树通过patch方法进行比对，在patch 方法中通过patchVnode比较新旧节点，通过 updateChildren 比较新旧子树（虚拟DOM部分详见另一篇文章）</p>
+<p>对于存在于旧的虚拟DOM树，不存在于新的虚拟DOM树的节点，调用 removeVnodes 方法，若节点为待删除的组件，则执行对应组件的 Vue.prototype.$destroy方法，先后触发 beforeDestroy 和 destroyed</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">Vue.prototype.$destroy = <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">var</span> vm = <span class="keyword">this</span>;</span><br><span class="line">  <span class="keyword">if</span> (vm._isBeingDestroyed) &#123;</span><br><span class="line">    <span class="keyword">return</span></span><br><span class="line">  &#125;</span><br><span class="line">  callHook(vm, <span class="string">'beforeDestroy'</span>);</span><br><span class="line">  vm._isBeingDestroyed = <span class="literal">true</span>;</span><br><span class="line">  <span class="comment">// remove self from parent</span></span><br><span class="line">  <span class="keyword">var</span> parent = vm.$parent;</span><br><span class="line">  <span class="keyword">if</span> (parent &amp;&amp; !parent._isBeingDestroyed &amp;&amp; !vm.$options.abstract) &#123;</span><br><span class="line">    remove(parent.$children, vm);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// teardown watchers</span></span><br><span class="line">  <span class="keyword">if</span> (vm._watcher) &#123;</span><br><span class="line">    vm._watcher.teardown();</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">var</span> i = vm._watchers.length;</span><br><span class="line">  <span class="keyword">while</span> (i--) &#123;</span><br><span class="line">    vm._watchers[i].teardown();</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// remove reference from data ob</span></span><br><span class="line">  <span class="comment">// frozen object may not have observer.</span></span><br><span class="line">  <span class="keyword">if</span> (vm._data.__ob__) &#123;</span><br><span class="line">    vm._data.__ob__.vmCount--;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// call the last hook...</span></span><br><span class="line">  vm._isDestroyed = <span class="literal">true</span>;</span><br><span class="line">  <span class="comment">// invoke destroy hooks on current rendered tree</span></span><br><span class="line">  vm.__patch__(vm._vnode, <span class="literal">null</span>);</span><br><span class="line">  <span class="comment">// fire destroyed hook</span></span><br><span class="line">  callHook(vm, <span class="string">'destroyed'</span>);</span><br><span class="line">  <span class="comment">// turn off all instance listeners.</span></span><br><span class="line">  vm.$off();</span><br><span class="line">  <span class="comment">// remove __vue__ reference</span></span><br><span class="line">  <span class="keyword">if</span> (vm.$el) &#123;</span><br><span class="line">    vm.$el.__vue__ = <span class="literal">null</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// release circular reference (#6759)</span></span><br><span class="line">  <span class="keyword">if</span> (vm.$vnode) &#123;</span><br><span class="line">    vm.$vnode.parent = <span class="literal">null</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>注：重点</strong></p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> updateComponent = <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123; <span class="comment">// 连接数据更新和 Dom 更新</span></span><br><span class="line">  vm._update(vm._render(), hydrating);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h2 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h2><p>初步了解钩子的逻辑后，接下来借助 devtools 调试 Vue ( v2.6.10 ) 源码，进一步了解 Vue 实例不同阶段的具体逻辑。调试的 demo 地址详见<a href="https://github.com/freezer95/vue_code_analysis_demo" target="_blank" rel="noopener">示例代码地址</a>。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>至此，以生命周期钩子为切入点，初步介绍了 Vue 框架 Core 的运行机制。如果将 Vue 框架 Core 比喻为一栋楼，生命周期的钩子就是不同楼层的标志，三大部分（模板编译、MVVM、虚拟DOM）就是几批分布在不同楼层的多个房间，暴露出来的 API 就是房间的门窗。愿每一位开发者都能透过门窗，面朝源码，拥抱 Bug。</p>
+<h2 id="扩展"><a href="#扩展" class="headerlink" title="扩展"></a>扩展</h2><p>推荐书籍：《深入浅出 Vue.js》刘博文 著</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/vue/" rel="tag"># vue</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/06/20/sort/" rel="next" title="排序算法">
+                <i class="fa fa-chevron-left"></i> 排序算法
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/09/11/autotest/" rel="prev" title="自动化测试">
+                自动化测试 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">Freezer</p>
+              <p class="site-description motion-element" itemprop="description">个人博客</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">4</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">tags</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#背景"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#图示"><span class="nav-number">2.</span> <span class="nav-text">图示</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#源码解析"><span class="nav-number">3.</span> <span class="nav-text">源码解析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#beforeCreate-amp-created"><span class="nav-number">3.0.1.</span> <span class="nav-text">beforeCreate &amp; created</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#beforeMount"><span class="nav-number">3.0.2.</span> <span class="nav-text">beforeMount</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#mounted"><span class="nav-number">3.0.3.</span> <span class="nav-text">mounted</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#beforeUpdate-amp-updated"><span class="nav-number">3.0.4.</span> <span class="nav-text">beforeUpdate &amp; updated</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#beforeDestroy-amp-destroyed"><span class="nav-number">3.0.5.</span> <span class="nav-text">beforeDestroy &amp; destroyed</span></a></li></ol></li></ol><li class="nav-item nav-level-2"><a class="nav-link" href="#示例"><span class="nav-number">4.</span> <span class="nav-text">示例</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#扩展"><span class="nav-number">6.</span> <span class="nav-text">扩展</span></a></li></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Freezer</span>
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
